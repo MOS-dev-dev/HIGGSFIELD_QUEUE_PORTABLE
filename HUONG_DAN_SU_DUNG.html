@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn Thao Tác Chi Tiết - Higgsfield AI Queue</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.65;
+            color: var(--text-main);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 30px 15px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px 50px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid var(--border);
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 26px;
+            text-align: center;
+            margin-bottom: 6px;
+            font-weight: 800;
+        }
+        .subtitle {
+            color: var(--primary);
+            font-size: 15px;
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+        }
+        .info-card {
+            background: #eff6ff;
+            border-left: 5px solid var(--primary);
+            padding: 16px 22px;
+            border-radius: 10px;
+            margin-bottom: 35px;
+            font-size: 14.5px;
+        }
+        .info-card p {
+            margin: 6px 0;
+        }
+        h2 {
+            color: #1e3a8a;
+            font-size: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        h3 {
+            color: #334155;
+            font-size: 17px;
+            margin-top: 24px;
+            font-weight: 700;
+        }
+        .step-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 14px 0;
+        }
+        .step-title {
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        ul, ol {
+            padding-left: 22px;
+            margin: 10px 0;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 22px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 3px 7px;
+            border-radius: 5px;
+            font-family: Consolas, Monaco, monospace;
+            color: #b91c1c;
+            font-size: 13.5px;
+            border: 1px solid #e2e8f0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-primary { background: #dbeafe; color: #1e40af; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .note {
+            background: #fffbeb;
+            border-left: 4px solid var(--warning);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13.5px;
+            color: #78350f;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            padding-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HƯỚNG DẪN THAO TÁC VÀ SỬ DỤNG CHI TIẾT</h1>
+        <div class="subtitle">HỆ THỐNG HIGGSFIELD AI VIDEO QUEUE AUTOMATION</div>
+
+        <div class="info-card">
+            <p><strong>🏠 Địa chỉ máy chủ Local:</strong> <a href="http://localhost:3100" target="_blank">http://localhost:3100</a></p>
+            <p><strong>🌐 Địa chỉ mạng nội bộ LAN:</strong> Xem huy hiệu màu xanh trên thanh tiêu đề Dashboard (VD: <code>http://192.168.68.18:3100</code>)</p>
+            <p><strong>📡 Cổng Chrome CDP Debugger:</strong> <code>http://127.0.0.1:9333</code></p>
+        </div>
+
+        <h2>🚀 PHẦN 1: CÁC BƯỚC CHUẨN BỊ & KHỞI ĐỘNG HỆ THỐNG</h2>
+        
+        <div class="step-box">
+            <div class="step-title">🔹 Bước 1: Khởi động Chrome CDP</div>
+            <p>Nhấp đúp chuột vào tệp <code>start-cdp.bat</code> trong thư mục dự án. Cửa sổ Google Chrome gỡ lỗi riêng biệt sẽ được mở lên.</p>
+            <div class="note">⚠️ Cửa sổ Chrome này sử dụng profile độc lập (<code>chrome_profile</code>), hoàn toàn không làm tắt hay ảnh hưởng đến các Chrome cá nhân khác của bạn.</div>
+        </div>
+
+        <div class="step-box">
+            <div class="step-title">🔹 Bước 2: Đăng nhập tài khoản Higgsfield</div>
+            <p>Trên cửa sổ Chrome vừa mở ở Bước 1, truy cập vào <a href="https://higgsfield.ai/ai/video" target="_blank">https://higgsfield.ai/ai/video</a> và tiến hành đăng nhập tài khoản của bạn.</p>
+        </div>
+
+        <div class="step-box">
+            <div class="step-title">🔹 Bước 3: Khởi động Dashboard</div>
+            <p>Mở Terminal/PowerShell tại thư mục dự án và chạy lệnh: <code>npm start</code> (hoặc <code>node server.js</code>). Sau đó mở trình duyệt truy cập <strong><a href="http://localhost:3100">http://localhost:3100</a></strong>.</p>
+        </div>
+
+        <h2>📝 PHẦN 2: HƯỚNG DẪN CHI TIẾT CÁC THAO TÁC TẠO TASK</h2>
+
+        <h3>🎯 Thao tác 1: Tạo Video Đơn Lẻ (Single Task)</h3>
+        <ol>
+            <li><strong>Điền Tên Người Tạo:</strong> Nhập tên của bạn vào ô <em>"Tên người tạo"</em> (VD: <em>Dũng</em>, <em>An</em>). Trình duyệt sẽ tự động lưu tên này để bạn không cần nhập lại lần sau.</li>
+            <li><strong>Nhập Prompt Kịch Bản:</strong> Gõ miêu tả video vào ô <em>"Mô tả video (Prompt)"</em> (VD: <em>Một chú mèo máy nhảy múa trên đỉnh núi tuyết lúc hoàng hôn, cinematic 4K</em>).</li>
+            <li><strong>Đính Kèm Ảnh Tham Chiếu (Reference Images):</strong> Kéo thả hoặc bấm để chọn 1 hoặc nhiều ảnh (JPG, PNG, WEBP).</li>
+            <li><strong>Đính Kèm Video Tham Chiếu (Reference Video):</strong> Kéo thả 1 tệp video tham chiếu (MP4, WEBM, MOV).</li>
+            <li><strong>Chọn Cấu Hình:</strong>
+                <ul>
+                    <li><strong>AI Model:</strong> Chọn <code>Seedance 2.5</code> (Khuyên dùng).</li>
+                    <li><strong>Thời Lượng (Duration):</strong> Chọn từ <strong>4s</strong> đến <strong>30s</strong>.</li>
+                    <li><strong>Tỉ Lệ (Aspect Ratio):</strong> <code>16:9</code> (Ngang), <code>9:16</code> (Dọc), <code>1:1</code> (Vuông).</li>
+                    <li><strong>Độ Phân Giải:</strong> <code>720p</code> (Hỗ trợ Unlimited) hoặc <code>1080p</code>.</li>
+                    <li><strong>Unlimited Mode:</strong> Bật ON để tạo video miễn phí theo gói dịch vụ.</li>
+                </ul>
+            </li>
+            <li><strong>Nhấp Nút:</strong> Bấm <span class="badge badge-success">➕ Thêm Vào Hàng Chờ</span>.</li>
+        </ol>
+
+        <h3>🎯 Thao tác 2: Tạo Hàng Loạt (Bulk Import)</h3>
+        <ol>
+            <li>Chuyển sang tab <strong>"Nhập Hàng Loạt"</strong>.</li>
+            <li>Dán danh sách prompt (mỗi dòng 1 prompt hoặc dán mảng JSON).</li>
+            <li>Chọn cấu hình chung (Người tạo, Model, Duration, Tỉ lệ).</li>
+            <li>Bấm nút <span class="badge badge-primary">🚀 Import Hàng Loạt Vào Queue</span>.</li>
+        </ol>
+
+        <h2>🎮 PHẦN 3: ĐIỀU KHIỂN & THEO DÕI HÀNG CHỜ</h2>
+        <ul>
+            <li><strong>Bật / Tạm dừng Hàng Chờ:</strong> Dùng nút <span class="badge badge-success">▶ Bật Hàng Chờ</span> hoặc <span class="badge badge-warning">⏸ Tạm Dừng</span> ở thanh công cụ.</li>
+            <li><strong>Live Stream Trực Tiếp:</strong> Màn hình Live Stream góc phải cập nhật liên tục mỗi 3 giây thao tác thực tế trên Chrome.</li>
+            <li><strong>Xem & Tải Video Hoàn Thành:</strong> Khi task xong (100%), bấm nút <span class="badge badge-primary">🎬 Xem Video</span> để xem ngay hoặc <span class="badge badge-success">⬇️ Tải về</span> để lưu file MP4.</li>
+            <li><strong>Thử Lại Task Lỗi:</strong> Nếu task bị lỗi, bấm nút <span class="badge badge-warning">🔄 Thử lại</span> để nạp lại vào hàng chờ.</li>
+            <li><strong>Thu Gọn / Xem Thêm Prompt:</strong> Nhấp nút <em>"Xem thêm ▾"</em> hoặc <em>"Thu gọn ▴"</em> để đọc prompt dài một cách gọn gàng.</li>
+        </ul>
+
+        <h2>🌐 PHẦN 4: HƯỚNG DẪN DÙNG CHUNG QUA MẠNG NỘI BỘ (LAN)</h2>
+        <ol>
+            <li>Nhấp chuột vào huy hiệu <strong>🌐 LAN: 192.168.68.18:3100</strong> trên thanh tiêu đề Dashboard để tự động copy link.</li>
+            <li>Gửi đường link cho các đồng đội kết nối cùng mạng Wi-Fi công ty.</li>
+            <li>Mọi người có thể mở link trên máy tính của họ, nhập tên người tạo và nạp task vào hàng chờ chung dễ dàng.</li>
+        </ol>
+
+        <h2>🛠️ PHẦN 5: XỬ LÝ SỰ CỐ THƯỜNG GẶP</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Hiện Tượng</th>
+                    <th style="width: 35%;">Nguyên Nhân</th>
+                    <th style="width: 40%;">Cách Xử Lý Nhanh</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CDP Báo Disconnected (Đỏ)</strong></td>
+                    <td>Chrome CDP chưa được bật hoặc bị đóng.</td>
+                    <td>Chạy lại tệp <code>start-cdp.bat</code>.</td>
+                </tr>
+                <tr>
+                    <td><strong>Task báo lỗi chưa đăng nhập</strong></td>
+                    <td>Tài khoản Higgsfield bị hết hạn phiên.</td>
+                    <td>Mở Chrome CDP và đăng nhập lại tại higgsfield.ai.</td>
+                </tr>
+                <tr>
+                    <td><strong>Task báo lỗi đối chiếu tham chiếu</strong></td>
+                    <td>Mạng chậm chưa tải xong ảnh/video.</td>
+                    <td>Bấm <strong>🔄 Thử lại (Retry)</strong> trên task đó.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            Higgsfield AI Video Queue Automation System &copy; 2026
+        </div>
+    </div>
+</body>
+</html>

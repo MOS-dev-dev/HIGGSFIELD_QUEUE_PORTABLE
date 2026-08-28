@@ -1,0 +1,22 @@
+{
+  "name": "higgfield-queue",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Higgsfield AI Video Queue Automation Dashboard with Chrome CDP",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/runner.js",
+    "start-cdp": "powershell -ExecutionPolicy Bypass -File ./start-cdp.ps1",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "docx": "^9.7.1",
+    "express": "^4.19.2",
+    "puppeteer-core": "^22.0.0",
+    "socket.io": "^4.7.5"
+  }
+}

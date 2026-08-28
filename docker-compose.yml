@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  queue-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: higgfield-queue-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - CDP_HOST=host.docker.internal
+      - CDP_PORT=9333
+      - NODE_ENV=production
+      - HOST_UPLOADS_DIR=D:\tools GTF\higgfield-queue\uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./queue_db.json:/app/queue_db.json
+      - ./uploads:/app/uploads
+      - C:/Users/admin/.config/higgsfield:/root/.config/higgsfield
+

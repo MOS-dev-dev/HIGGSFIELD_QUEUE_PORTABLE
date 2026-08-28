@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Higgsfield AI - Video Automation Queue Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Nav -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-badge">
+                    <span class="logo-icon">✨</span>
+                    <span class="logo-text">AI STUDIO</span>
+                </div>
+                <div class="logo-titles">
+                    <h1>Higgsfield Video Automation Queue</h1>
+                    <p class="subtitle">Real-Time CDP 10-Step Automation Engine</p>
+                </div>
+            </div>
+
+            <div class="header-badges">
+                <!-- LAN IP Share Badge -->
+                <div class="status-pill lan-pill" id="lan-pill" style="cursor: pointer; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.35);" title="Nhấp để sao chép đường dẫn chia sẻ trong mạng LAN">
+                    <span class="status-dot green"></span>
+                    <span id="lan-text" style="color: #60a5fa; font-weight: 600;">🌐 LAN: 192.168.68.18:3100 (Click để Copy)</span>
+                </div>
+
+                <!-- Host CDP Status Badge -->
+                <div class="status-pill" id="cdp-status" title="Chrome DevTools Protocol Port 9333">
+                    <span class="status-dot yellow" id="cdp-dot"></span>
+                    <span id="cdp-text">CDP: Đang kiểm tra...</span>
+                </div>
+
+                <!-- Global Queue Status Badge -->
+                <div class="status-pill queue-pill" id="queue-status-pill">
+                    <span class="status-dot gray" id="queue-dot"></span>
+                    <span id="queue-status-text">Hàng Chờ: IDLE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview Bar -->
+        <section class="stats-bar">
+            <div class="stat-card" id="stat-card-total">
+                <span class="stat-label">Tổng Số Task</span>
+                <span class="stat-value" id="stat-total">0</span>
+            </div>
+            <div class="stat-card" id="stat-card-pending">
+                <span class="stat-label">Chờ Xử Lý</span>
+                <span class="stat-value text-blue" id="stat-pending">0</span>
+            </div>
+            <div class="stat-card" id="stat-card-running">
+                <span class="stat-label">Đang Chạy</span>
+                <span class="stat-value text-emerald" id="stat-running">0</span>
+            </div>
+            <div class="stat-card" id="stat-card-completed">
+                <span class="stat-label">Hoàn Thành</span>
+                <span class="stat-value text-green" id="stat-completed">0</span>
+            </div>
+            <div class="stat-card" id="stat-card-failed">
+                <span class="stat-label">Thất Bại</span>
+                <span class="stat-value text-rose" id="stat-failed">0</span>
+            </div>
+            <div class="stat-card" id="stat-card-eta" title="Ước tính 30 phút / 1 video">
+                <span class="stat-label">Thời Gian Chờ (ETA)</span>
+                <span class="stat-value text-purple" id="stat-eta">0 phút</span>
+            </div>
+            <div class="stat-card stat-card-credits" id="stat-card-credits" title="Credit balance tài khoản Higgsfield">
+                <span class="stat-label">🪙 Credits</span>
+                <span class="stat-value text-amber" id="stat-credits">...</span>
+            </div>
+        </section>
+
+        <!-- Main Workspace Layout -->
+        <main class="main-layout">
+            <!-- Left Panel: Queue Controls & Task Creation -->
+            <section class="panel-left">
+                <!-- Queue Control Card -->
+                <div class="card control-card">
+                    <div class="card-header">
+                        <h2>
+                            <span class="header-icon">🎮</span> Bảng Điều Khiển Queue
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="controls-group">
+                            <button id="btn-start" class="btn btn-success" title="Khởi động xử lý hàng chờ">
+                                <span class="icon">▶</span> Bắt Đầu
+                            </button>
+                            <button id="btn-pause" class="btn btn-warning" disabled title="Tạm dừng hàng chờ">
+                                <span class="icon">⏸</span> Tạm Dừng
+                            </button>
+                            <button id="btn-stop" class="btn btn-danger" disabled title="Dừng hàng chờ và hủy task đang chạy">
+                                <span class="icon">⏹</span> Dừng
+                            </button>
+                            <button id="btn-clear" class="btn btn-secondary" title="Dọn dẹp các task đã hoàn thành">
+                                <span class="icon">🧹</span> Dọn Đã Xong
+                            </button>
+                            <button id="btn-sync-videos" class="btn btn-secondary" title="Quét và cập nhật lại link cho các video đã hoàn thành trên Higgsfield">
+                                <span class="icon">🔄</span> Đồng Bộ Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Tabs: Single Task vs Bulk Import -->
+                <div class="card form-card">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" id="tab-btn-single" data-tab="single-form">
+                            <span class="tab-icon">✍️</span> Task Đơn Lẻ
+                        </button>
+                        <button class="tab-btn" id="tab-btn-bulk" data-tab="bulk-tab">
+                            <span class="tab-icon">📥</span> Import Hàng Loạt
+                        </button>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Single Task Form -->
+                        <form id="single-form" class="tab-content active">
+                            <!-- Creator Name Field -->
+                            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label for="creator">👤 Tên Người Tạo <span class="required">*</span></label>
+                                    <input type="text" id="creator" placeholder="VD: Nguyễn Văn A, Team Marketing..." required>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label for="task-name">📁 Tên Task</label>
+                                    <input type="text" id="task-name" placeholder="VD: Sản phẩm A - Shot 1, Quảng cáo mùa hè...">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label for="prompt">Prompt Mô Tả Video <span class="required">*</span></label>
+                                    <span class="char-count" id="prompt-char-count">0 ký tự</span>
+                                </div>
+                                <textarea id="prompt" rows="3" placeholder="Ví dụ: Cinematic shot of a majestic dragon flying through misty mountain peaks at golden hour, ultra realistic 8k..." required></textarea>
+                                
+                                <!-- Quick Prompt Suggestions -->
+                                <div class="quick-prompts">
+                                    <span class="quick-prompt-chip" data-prompt="Cinematic drone shot of futuristic cyberpunk Tokyo at night, raining with neon reflections, 8k resolution, photorealistic">🌃 Cyberpunk City</span>
+                                    <span class="quick-prompt-chip" data-prompt="Macro slow-motion shot of a water droplet falling on a vibrant emerald leaf, hyperdetailed, 4k">💧 Nature Macro</span>
+                                    <span class="quick-prompt-chip" data-prompt="Epic astronaut floating in deep space near a colorful nebula, cinematic lighting, masterpiece">🚀 Sci-Fi Galaxy</span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Image Section (Support Multi-file & Drag-and-Drop Reorder) -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label>📷 Ảnh Tham Chiếu (Chọn 1 hoặc nhiều ảnh • Kéo thả đổi thứ tự)</label>
+                                    <span id="image-counter-badge" class="badge-count" style="display:none;">0/20 ảnh</span>
+                                </div>
+                                
+                                <!-- Upload Dropzone -->
+                                <div class="image-dropzone" id="image-dropzone">
+                                    <input type="file" id="imageFileInput" accept="image/*" multiple class="file-input-hidden">
+                                    <div class="dropzone-content" id="dropzone-content">
+                                        <span class="dropzone-icon">📷</span>
+                                        <p class="dropzone-text">+ Kéo thả hoặc <span class="browse-link">chọn ảnh từ máy (1 hoặc nhiều ảnh)</span></p>
+                                        <span class="dropzone-hint">PNG, JPG, WEBP (Có thể chọn nhiều ảnh, kéo thả các thẻ để đổi thứ tự tải lên)</span>
+                                    </div>
+                                </div>
+
+                                <!-- Multi-image List Preview (Draggable Reorder) -->
+                                <div class="media-preview-list" id="image-preview-list" style="display: none;"></div>
+
+                                <!-- Local File Path Alternative -->
+                                <div class="path-input-toggle">
+                                    <input type="text" id="imagePath" placeholder="Hoặc nhập đường dẫn ảnh (phân cách bằng dấu phẩy hoặc xuống dòng)">
+                                </div>
+                            </div>
+
+                            <!-- Reference Video Section (Support Multi-file & Drag-and-Drop Reorder) -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label>🎬 Video Tham Chiếu (Chọn 1 hoặc nhiều video • Kéo thả đổi thứ tự • Luôn gán sau ảnh)</label>
+                                    <span id="video-counter-badge" class="badge-count" style="display:none;">0/20 video</span>
+                                </div>
+                                
+                                <!-- Upload Dropzone -->
+                                <div class="image-dropzone" id="video-dropzone">
+                                    <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime,video/avi,video/mkv" multiple class="file-input-hidden">
+                                    <div class="dropzone-content" id="video-dropzone-content">
+                                        <span class="dropzone-icon">🎬</span>
+                                        <p class="dropzone-text">+ Kéo thả hoặc <span class="browse-link">chọn video từ máy (1 hoặc nhiều video)</span></p>
+                                        <span class="dropzone-hint">MP4, WEBM, MOV (Có thể kéo thả các thẻ để đổi thứ tự video tải lên)</span>
+                                    </div>
+                                </div>
+
+                                <!-- Multi-video List Preview (Draggable Reorder) -->
+                                <div class="media-preview-list" id="video-preview-list" style="display: none;"></div>
+
+                                <!-- Local Video Path Alternative -->
+                                <div class="path-input-toggle">
+                                    <input type="text" id="videoPath" placeholder="Hoặc nhập đường dẫn video (phân cách bằng dấu phẩy hoặc xuống dòng)">
+                                </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="model">AI Model</label>
+                                    <select id="model">
+                                        <option value="Seedance 2.5" selected>Seedance 2.5 (Khuyên dùng)</option>
+                                        <option value="Higgsfield Standard">Higgsfield Standard</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="duration">Thời Lượng (Duration: 4s - 30s)</label>
+                                    <select id="duration">
+                                        <option value="" selected>Mặc định (16s)</option>
+                                        <option value="4s">4 Giây (4s)</option>
+                                        <option value="5s">5 Giây (5s)</option>
+                                        <option value="6s">6 Giây (6s)</option>
+                                        <option value="7s">7 Giây (7s)</option>
+                                        <option value="8s">8 Giây (8s)</option>
+                                        <option value="9s">9 Giây (9s)</option>
+                                        <option value="10s">10 Giây (10s)</option>
+                                        <option value="11s">11 Giây (11s)</option>
+                                        <option value="12s">12 Giây (12s)</option>
+                                        <option value="13s">13 Giây (13s)</option>
+                                        <option value="14s">14 Giây (14s)</option>
+                                        <option value="15s">15 Giây (15s)</option>
+                                        <option value="16s">16 Giây (16s)</option>
+                                        <option value="17s">17 Giây (17s)</option>
+                                        <option value="18s">18 Giây (18s)</option>
+                                        <option value="19s">19 Giây (19s)</option>
+                                        <option value="20s">20 Giây (20s)</option>
+                                        <option value="22s">22 Giây (22s)</option>
+                                        <option value="24s">24 Giây (24s)</option>
+                                        <option value="26s">26 Giây (26s)</option>
+                                        <option value="28s">28 Giây (28s)</option>
+                                        <option value="30s">30 Giây (30s)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="aspectRatio">Tỉ Lệ Khung Hình</label>
+                                    <select id="aspectRatio">
+                                        <option value="16:9" selected>16:9 (Landscape - Youtube)</option>
+                                        <option value="9:16">9:16 (Portrait - TikTok/Reels)</option>
+                                        <option value="1:1">1:1 (Square - Instagram)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="resolution">Độ Phân Giải</label>
+                                    <select id="resolution">
+                                        <option value="720p" selected>720p (HD - Hỗ trợ Unlimited)</option>
+                                        <option value="1080p">1080p (Full HD)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group unlimited-toggle-row" id="unlimited-row">
+                                <label class="switch-container">
+                                    <input type="checkbox" id="unlimited" checked>
+                                    <span class="switch-slider"></span>
+                                    <span class="switch-text">
+                                        <strong>Kích hoạt Unlimited Mode</strong>
+                                        <small>Tự động bấm chế độ Unlimited khi tạo video</small>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div class="form-group credit-mode-toggle-row">
+                                <label class="switch-container credit-switch">
+                                    <input type="checkbox" id="credit-mode">
+                                    <span class="switch-slider credit-slider"></span>
+                                    <span class="switch-text">
+                                        <strong>🪙 Chế Độ Credit (CLI)</strong>
+                                        <small>Tạo bằng CLI — song song, tiêu credit, không dùng trình duyệt</small>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div id="cli-options" style="display:none">
+                                <div class="form-group">
+                                    <div class="credit-info-bar">
+                                        <span class="credit-balance-label">💳 Balance:</span>
+                                        <span id="credit-balance-val" class="credit-balance-val">...</span>
+                                        <span id="credit-parallel-badge" class="credit-parallel-badge"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cli-model">🤖 Model CLI</label>
+                                    <select id="cli-model">
+                                        <option value="seedance_2_5">Seedance 2.5</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-full btn-lg" id="submit-btn">
+                                <span class="icon">➕</span> Thêm Vào Hàng Chờ
+                            </button>
+                        </form>
+
+                        <!-- Bulk Import Form -->
+                        <div id="bulk-tab" class="tab-content">
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label for="bulk-text">Nhập danh sách Prompt hàng loạt</label>
+                                    <span class="format-badge">Hỗ trợ Plain Text / JSON / CSV</span>
+                                </div>
+                                <textarea id="bulk-text" rows="6" placeholder="Mỗi dòng 1 prompt hoặc dán mảng JSON:&#10;Prompt 1: Cyberpunk warrior in neon rain...&#10;Prompt 2: Peaceful mountain sunrise with cherry blossoms...&#10;Prompt 3: Deep ocean bioluminescent creatures..."></textarea>
+                            </div>
+
+                            <!-- Common Options for Bulk -->
+                            <div class="bulk-options-box">
+                                <h4>Cấu hình chung cho toàn bộ danh sách:</h4>
+                                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                                    <div class="form-group" style="margin-bottom:0">
+                                        <label for="bulk-creator">👤 Tên Người Tạo</label>
+                                        <input type="text" id="bulk-creator" placeholder="VD: Nguyễn Văn A, Team Marketing...">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0">
+                                        <label for="bulk-task-name">📁 Tên Task Chung</label>
+                                        <input type="text" id="bulk-task-name" placeholder="VD: Chiến dịch mùa hè 2026...">
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="bulk-model">AI Model</label>
+                                        <select id="bulk-model">
+                                            <option value="Seedance 2.5" selected>Seedance 2.5</option>
+                                            <option value="Higgsfield Standard">Higgsfield Standard</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bulk-duration">Thời Lượng</label>
+                                        <select id="bulk-duration">
+                                            <option value="" selected>Mặc định</option>
+                                            <option value="4s">4s</option>
+                                            <option value="5s">5s</option>
+                                            <option value="6s">6s</option>
+                                            <option value="7s">7s</option>
+                                            <option value="8s">8s</option>
+                                            <option value="9s">9s</option>
+                                            <option value="10s">10s</option>
+                                            <option value="11s">11s</option>
+                                            <option value="12s">12s</option>
+                                            <option value="13s">13s</option>
+                                            <option value="14s">14s</option>
+                                            <option value="15s">15s</option>
+                                            <option value="16s">16s</option>
+                                            <option value="17s">17s</option>
+                                            <option value="18s">18s</option>
+                                            <option value="19s">19s</option>
+                                            <option value="20s">20s</option>
+                                            <option value="22s">22s</option>
+                                            <option value="24s">24s</option>
+                                            <option value="26s">26s</option>
+                                            <option value="28s">28s</option>
+                                            <option value="30s">30s</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="bulk-aspectRatio">Tỉ Lệ</label>
+                                        <select id="bulk-aspectRatio">
+                                            <option value="16:9" selected>16:9 Landscape</option>
+                                            <option value="9:16">9:16 Portrait</option>
+                                            <option value="1:1">1:1 Square</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bulk-resolution">Độ Phân Giải</label>
+                                        <select id="bulk-resolution">
+                                            <option value="720p" selected>720p (Hỗ trợ Unlimited)</option>
+                                            <option value="1080p">1080p</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Parser Preview -->
+                            <div class="bulk-preview-box" id="bulk-preview-box" style="display: none;">
+                                <div class="preview-header">
+                                    <span>🔍 Đã nhận diện <strong id="bulk-detected-count">0</strong> task:</span>
+                                </div>
+                                <div class="preview-list" id="bulk-preview-list"></div>
+                            </div>
+
+                            <div class="form-group credit-mode-toggle-row">
+                                <label class="switch-container credit-switch">
+                                    <input type="checkbox" id="bulk-credit-mode">
+                                    <span class="switch-slider credit-slider"></span>
+                                    <span class="switch-text">
+                                        <strong>🪙 Chế Độ Credit (CLI)</strong>
+                                        <small>Tất cả task bulk sẽ chạy song song qua CLI, tiêu credit</small>
+                                    </span>
+                                </label>
+                            </div>
+                            <div id="bulk-cli-options" style="display:none">
+                                <div class="form-group">
+                                    <label for="bulk-cli-model">🤖 Model CLI</label>
+                                    <select id="bulk-cli-model">
+                                        <option value="seedance_2_5">Seedance 2.5</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button id="btn-bulk-import" class="btn btn-primary w-full btn-lg">
+                                <span class="icon">📥</span> Import Hàng Loạt Vào Queue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Live Monitor & Queue Table -->
+            <section class="panel-right">
+                <!-- Live Monitor Panel -->
+                <div class="card monitor-card">
+                    <div class="card-header monitor-header">
+                        <div class="monitor-title">
+                            <h2><span class="header-icon">📡</span> Live Monitor & CDP Stream</h2>
+                            <span id="active-task-id" class="task-id-tag">Chưa có task</span>
+                        </div>
+                        <span id="active-task-badge" class="task-badge idle">Idle</span>
+                    </div>
+
+                    <div class="card-body monitor-body">
+                        <!-- 10-Step Pipeline Progress Section -->
+                        <div class="pipeline-progress-box">
+                            <div class="progress-info">
+                                <div class="step-info-col">
+                                    <span class="step-label">Tiến Trình 10 Bước:</span>
+                                    <span id="current-step-title" class="step-title">Sẵn sàng chờ lệnh...</span>
+                                </div>
+                                <span id="progress-percent" class="progress-percent">0%</span>
+                            </div>
+
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress-fill"></div>
+                            </div>
+
+                            <!-- 10-Step Milestone Visual Track -->
+                            <div class="milestones-track" id="milestones-track">
+                                <div class="milestone-step" data-step="1" title="1. Điều hướng Studio">1</div>
+                                <div class="milestone-step" data-step="2" title="2. Nhập Prompt">2</div>
+                                <div class="milestone-step" data-step="3" title="3. Dọn ảnh cũ">3</div>
+                                <div class="milestone-step" data-step="4" title="4. Upload ảnh mới">4</div>
+                                <div class="milestone-step" data-step="5" title="5. Chọn Model AI">5</div>
+                                <div class="milestone-step" data-step="6" title="6. Chọn Duration">6</div>
+                                <div class="milestone-step" data-step="7" title="7. Chọn Aspect Ratio">7</div>
+                                <div class="milestone-step" data-step="8" title="8. Chọn Resolution">8</div>
+                                <div class="milestone-step" data-step="9" title="9. Bật Unlimited">9</div>
+                                <div class="milestone-step" data-step="10" title="10. Bấm Generate">10</div>
+                            </div>
+                        </div>
+
+                        <!-- Split Preview: Live Screenshot & Real-Time Logs -->
+                        <div class="monitor-grid">
+                            <!-- Live Screenshot Stream -->
+                            <div class="preview-box">
+                                <div class="box-header">
+                                    <h3><span class="stream-pulse">●</span> Xem Trước Trực Tiếp (Live Stream)</h3>
+                                </div>
+                                <div class="preview-container">
+                                    <img id="live-screenshot" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'><rect width='100%' height='100%' fill='%230b0e17'/><text x='50%' y='50%' fill='%23475569' font-family='sans-serif' font-size='14' text-anchor='middle'>Sẵn sàng kết nối Chrome CDP</text></svg>" alt="Live Preview">
+                                    <div class="stream-overlay-tag">CDP 9333</div>
+                                </div>
+                            </div>
+
+                            <!-- Live Terminal Logs -->
+                            <div class="logs-box">
+                                <div class="box-header" style="flex-wrap: wrap; gap: 8px;">
+                                    <div class="terminal-tabs" id="terminal-tabs">
+                                        <button type="button" class="terminal-tab-btn active" id="tab-log-all" data-target="logs-container">
+                                            <span>💻</span> Toàn Bộ Hệ Thống
+                                        </button>
+                                        <button type="button" class="terminal-tab-btn cli-tab" id="tab-log-cli" data-target="cli-logs-container">
+                                            <span>⚡</span> Luồng CLI Cloud
+                                        </button>
+                                    </div>
+                                    <div class="logs-actions">
+                                        <label class="autoscroll-label">
+                                            <input type="checkbox" id="autoscroll-toggle" checked>
+                                            <span>Auto-scroll</span>
+                                        </label>
+                                        <button type="button" id="btn-clear-logs" class="btn-xs" title="Xóa logs">Clear</button>
+                                    </div>
+                                </div>
+                                <div class="terminal-logs" id="logs-container">
+                                    <div class="log-line info">[Khởi động] Hệ thống Higgsfield Queue Dashboard đã sẵn sàng.</div>
+                                </div>
+                                <div class="terminal-logs hidden" id="cli-logs-container">
+                                    <div class="log-line info" style="color: #818cf8;">[Khởi động] Kênh giám sát luồng Higgsfield CLI Cloud sẵn sàng.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Queue Database Table Card -->
+                <div class="card table-card">
+                    <div class="card-header table-header">
+                        <div class="table-title-group">
+                            <h2><span class="header-icon">📋</span> Danh Sách Task Hàng Chờ</h2>
+                            <span class="badge-count" id="queue-count">0</span>
+                        </div>
+
+                        <!-- Filter Chips & Search -->
+                        <div class="table-tools">
+                            <div class="search-box">
+                                <input type="text" id="table-search" placeholder="🔍 Tìm kiếm prompt, ID...">
+                            </div>
+                            <div class="filter-group">
+                                <button class="filter-chip active" data-filter="all">Tất Cả</button>
+                                <button class="filter-chip" data-filter="pending">Chờ Xử Lý</button>
+                                <button class="filter-chip" data-filter="running">Đang Chạy</button>
+                                <button class="filter-chip" data-filter="completed">Hoàn Thành</button>
+                                <button class="filter-chip" data-filter="failed">Thất Bại</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th width="45">STT</th>
+                                    <th>Prompt & Ảnh Tham Chiếu</th>
+                                    <th width="160">Cấu Hình</th>
+                                    <th width="110">Trạng Thái</th>
+                                    <th width="180">Tiến Độ & Bước</th>
+                                    <th width="110">Thời Gian</th>
+                                    <th width="100" class="text-center">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="queue-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center empty-msg">
+                                        <div class="empty-state">
+                                            <span class="empty-icon">📭</span>
+                                            <p>Chưa có task nào trong hàng chờ.</p>
+                                            <small>Tạo task mới từ biểu mẫu bên trái để bắt đầu tạo video.</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!-- Pagination Bar -->
+                        <div id="table-pagination" class="table-pagination" style="display:none;"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Media Lightbox / Preview Modal -->
+    <div id="media-preview-modal" class="media-modal-backdrop" onclick="window.closeMediaModal(event)">
+        <div class="media-modal-content" onclick="event.stopPropagation()">
+            <div class="media-modal-header">
+                <span id="media-modal-title" class="media-modal-title">Xem trước file</span>
+                <button type="button" class="media-modal-close" onclick="window.closeMediaModal()">✕</button>
+            </div>
+            <div id="media-modal-body" class="media-modal-body"></div>
+        </div>
+    </div>
+
+    <script src="app.js?v=4"></script>
+</body>
+</html>
+
