@@ -25,5 +25,6 @@ downloads/*
 Thumbs.db
 *.tmp
 *.bak
+backups/
 .env
 .env.*
